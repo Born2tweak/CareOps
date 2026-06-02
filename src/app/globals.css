@@ -81,6 +81,43 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Operational status (badges, queue — M4+ foundation) */
+  --status-success-bg: oklch(0.96 0.03 155);
+  --status-success-fg: oklch(0.35 0.08 155);
+  --status-success-border: oklch(0.88 0.05 155);
+  --status-warning-bg: oklch(0.97 0.04 85);
+  --status-warning-fg: oklch(0.42 0.1 75);
+  --status-warning-border: oklch(0.9 0.06 85);
+  --status-danger-bg: oklch(0.97 0.03 25);
+  --status-danger-fg: oklch(0.45 0.14 25);
+  --status-danger-border: oklch(0.9 0.05 25);
+  --status-pending-bg: oklch(0.96 0.03 250);
+  --status-pending-fg: oklch(0.4 0.1 250);
+  --status-pending-border: oklch(0.88 0.05 250);
+  --status-info-bg: oklch(0.96 0.02 230);
+  --status-info-fg: oklch(0.38 0.06 230);
+  --status-info-border: oklch(0.88 0.04 230);
+  --status-neutral-bg: oklch(0.97 0 0);
+  --status-neutral-fg: oklch(0.45 0 0);
+  --status-neutral-border: oklch(0.9 0 0);
+
+  /* Urgency (exception queue — M9+) */
+  --urgency-critical-bg: oklch(0.96 0.04 25);
+  --urgency-critical-fg: oklch(0.4 0.16 25);
+  --urgency-critical-border: oklch(0.88 0.06 25);
+  --urgency-urgent-bg: oklch(0.97 0.05 55);
+  --urgency-urgent-fg: oklch(0.42 0.12 55);
+  --urgency-urgent-border: oklch(0.9 0.06 55);
+  --urgency-warning-bg: oklch(0.97 0.04 85);
+  --urgency-warning-fg: oklch(0.42 0.1 75);
+  --urgency-warning-border: oklch(0.9 0.06 85);
+  --urgency-normal-bg: oklch(0.97 0 0);
+  --urgency-normal-fg: oklch(0.45 0 0);
+  --urgency-normal-border: oklch(0.9 0 0);
+  --urgency-resolved-bg: oklch(0.96 0.03 155);
+  --urgency-resolved-fg: oklch(0.35 0.08 155);
+  --urgency-resolved-border: oklch(0.88 0.05 155);
 }
 
 .dark {

@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── AUTH & USERS ───────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+}
+
+model User {
+  id         String   @id @default(uuid())
+  supabaseId String   @unique @map("supabase_id")
+  email      String   @unique
+  role       UserRole @default(EMPLOYEE)
+
+  employeeId String?   @unique @map("employee_id")
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+// ─── EMPLOYEES ──────────────────────────────────────────
+
+enum EmploymentStatus {
+  ACTIVE
+  INACTIVE
+  ONBOARDING
+  TERMINATED
+}
+
+model Employee {
+  id         String           @id @default(uuid())
+  firstName  String           @map("first_name")
+  lastName   String           @map("last_name")
+  email      String           @unique
+  phone      String?
+  hireDate   DateTime         @map("hire_date")
+  status     EmploymentStatus @default(ONBOARDING)
+  position   String?
+  department String?
+
+  user              User?
+  complianceRecords ComplianceRecord[]
+  notifications     Notification[]
+  reminderLogs      ReminderLog[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([lastName, firstName])
+  @@map("employees")
+}
+
+// ─── COMPLIANCE ─────────────────────────────────────────
+
+enum ComplianceStatus {
+  COMPLETE
+  PENDING
+  MISSING
+  EXPIRED
+}
+
+model ComplianceItem {
+  id               String  @id @default(uuid())
+  name             String  @unique
+  description      String?
+  category         String?
+  expiresAfterDays Int?    @map("expires_after_days")
+  isRequired       Boolean @default(true) @map("is_required")
+  isDefault        Boolean @default(true) @map("is_default")
+  sortOrder        Int     @default(0) @map("sort_order")
+
+  records ComplianceRecord[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("compliance_items")
+}
+
+enum FollowUpStatus {
+  NOT_CONTACTED
+  CONTACTED
+  AWAITING_RENEWAL
+  PENDING_REVIEW
+  ESCALATED
+  RESOLVED
+}
+
+model ComplianceRecord {
+  id               String           @id @default(uuid())
+  employeeId       String           @map("employee_id")
+  complianceItemId String           @map("compliance_item_id")
+  status           ComplianceStatus @default(MISSING)
+  completedDate    DateTime?        @map("completed_date")
+  expirationDate   DateTime?        @map("expiration_date")
+  notes            String?
+
+  followUpStatus    FollowUpStatus @default(NOT_CONTACTED) @map("follow_up_status")
+  followUpNotes     String?        @map("follow_up_notes")
+  lastContactedDate DateTime?      @map("last_contacted_date")
+
+  employee       Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  complianceItem ComplianceItem @relation(fields: [complianceItemId], references: [id])
+  reminderLogs   ReminderLog[]
+  documents      Document[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([employeeId, complianceItemId])
+  @@index([status])
+  @@index([expirationDate])
+  @@index([followUpStatus])
+  @@map("compliance_records")
+}
+
+// ─── DOCUMENTS ─────────────────────────────────────────
+
+model Document {
+  id                 String           @id @default(uuid())
+  complianceRecordId String           @map("compliance_record_id")
+  fileName           String           @map("file_name")
+  fileType           String           @map("file_type")
+  fileSize           Int              @map("file_size")
+  storagePath        String           @map("storage_path")
+  uploadedById       String           @map("uploaded_by_id")
+
+  complianceRecord ComplianceRecord @relation(fields: [complianceRecordId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([complianceRecordId])
+  @@map("documents")
+}
+
+// ─── NOTIFICATIONS ──────────────────────────────────────
+
+enum NotificationType {
+  EXPIRING_SOON
+  EXPIRED
+  MISSING_ITEM
+  SYSTEM
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  employeeId String?          @map("employee_id")
+  type       NotificationType
+  title      String
+  message    String
+  isRead     Boolean          @default(false) @map("is_read")
+  sentAt     DateTime         @default(now()) @map("sent_at")
+  metadata   Json?
+
+  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, isRead])
+  @@index([sentAt])
+  @@map("notifications")
+}
+
+// ─── REMINDER LOG ──────────────────────────────────────
+
+model ReminderLog {
+  id                 String   @id @default(uuid())
+  complianceRecordId String   @map("compliance_record_id")
+  employeeId         String   @map("employee_id")
+  sentById           String   @map("sent_by_id")
+  recipientEmail     String   @map("recipient_email")
+  reminderType       String   @map("reminder_type") // "expired" | "expiring" | "missing"
+  subject            String
+  body               String
+  sentAt             DateTime @default(now()) @map("sent_at")
+
+  complianceRecord ComplianceRecord @relation(fields: [complianceRecordId], references: [id])
+  employee         Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([complianceRecordId])
+  @@index([employeeId])
+  @@index([sentAt])
+  @@map("reminder_logs")
+}
+
+// ─── AUDIT LOG ──────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  details    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
